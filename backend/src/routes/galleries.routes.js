@@ -33,4 +33,9 @@ router.post('/:id/photos', verifyToken, authorize('admin', 'staff'), upload.sing
 router.put('/photos/:id', verifyToken, authorize('admin', 'staff'), galleriesController.updatePhoto);
 router.delete('/photos/:id', verifyToken, authorize('admin', 'staff'), galleriesController.deletePhoto);
 
+// Download original file (admin->client: client triggers download)
+// NOTE: access control is admin/staff; clients only need access if your auth allows it.
+router.get('/photos/:id/download', verifyToken, authorize('admin', 'staff'), galleriesController.downloadPhoto);
+
+
 module.exports = router;

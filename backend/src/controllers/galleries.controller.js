@@ -7,15 +7,23 @@ const path = require('path');
 
 // ==================== GALLERY CONTROLLERS ====================
 
+
 // Get all galleries
 const getAllGalleries = async (req, res, next) => {
     try {
-        const { is_published = true, page = 1, limit = 12 } = req.query;
-        
+        // Admin/staff needs to see all galleries (including drafts/unpublished).
+        // If the caller explicitly passes is_published=true/false we respect it.
+        const { is_published, page = 1, limit = 12 } = req.query;
+
         const offset = (page - 1) * limit;
 
+        const where = {};
+        if (is_published !== undefined) {
+            where.is_published = is_published === 'true';
+        }
+
         const { count, rows } = await Gallery.findAndCountAll({
-            where: { is_published: is_published === 'true' },
+            where,
             include: [
                 { model: User, attributes: ['first_name', 'last_name'] }
             ],
@@ -261,9 +269,12 @@ const deletePhoto = async (req, res, next) => {
 
         // Delete file
         try {
-            await fs.unlink(photo.file_path);
+            // file_path is stored as /uploads/<filename>
+            const fileFsPath = path.join(process.cwd(), photo.file_path.replace(/^\//, ''));
+            await fs.unlink(fileFsPath);
             if (photo.thumbnail_path) {
-                await fs.unlink(photo.thumbnail_path);
+                const thumbFsPath = path.join(process.cwd(), photo.thumbnail_path.replace(/^\//, ''));
+                await fs.unlink(thumbFsPath);
             }
         } catch (err) {
             console.error('Error deleting file:', err);
@@ -287,7 +298,39 @@ const deletePhoto = async (req, res, next) => {
     }
 };
 
+// Download photo original file
+const downloadPhoto = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const photo = await Photo.findByPk(id);
+
+        if (!photo) {
+            return next(new AppError('Photo not found', 404));
+        }
+
+        if (!photo.file_path) {
+            return next(new AppError('File path not found', 404));
+        }
+
+        // file_path stored like /uploads/<filename>
+        const fileFsPath = path.join(process.cwd(), photo.file_path.replace(/^\//, ''));
+
+        // Ensure file exists
+        try {
+            await fs.access(fileFsPath);
+        } catch {
+            return next(new AppError('File not found on server', 404));
+        }
+
+        const filename = path.basename(photo.file_path);
+        res.download(fileFsPath, filename);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
+
     getAllGalleries,
     getGalleryById,
     createGallery,
@@ -296,5 +339,7 @@ module.exports = {
     getGalleryPhotos,
     uploadPhoto,
     updatePhoto,
-    deletePhoto
+    deletePhoto,
+    downloadPhoto
 };
+

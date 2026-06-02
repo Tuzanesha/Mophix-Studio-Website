@@ -1,10 +1,5 @@
 -- MOPHIX STUDIO - DATABASE SCHEMA
--NT PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),- Compatible with MySQL 8.0+ and PostgreSQL 12+
+-- Compatible with MySQL 8.0+ and PostgreSQL 12+
 -- Created: 2024
 
 -- =====================================================
@@ -19,7 +14,12 @@
 -- =====================================================
 
 CREATE TABLE users (
-    user_id I
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
     role ENUM('admin', 'staff', 'client') DEFAULT 'client',
     profile_image_url VARCHAR(500),
     bio TEXT,
@@ -169,6 +169,7 @@ CREATE TABLE bookings (
     status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
     total_price DECIMAL(10, 2),
     payment_status ENUM('unpaid', 'paid', 'partial') DEFAULT 'unpaid',
+    completed_file_url VARCHAR(500) DEFAULT NULL,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -367,9 +368,9 @@ INSERT INTO blog_categories (name, slug, description, display_order) VALUES
 -- Insert Settings
 INSERT INTO settings (setting_key, setting_value, setting_type) VALUES
 ('site_name', 'Mophix Studio', 'string'),
-('site_email', 'info@mophix.com', 'string'),
-('site_phone', '+250788242290', 'string'),
-('site_address', 'KG Kaserenge, Kigali, Rwanda', 'string'),
+('site_email', 'mophixstudio@gmail.com', 'string'),
+('site_phone', '+250780304910 / +250780950325', 'string'),
+('site_address', 'KN 8 Ave, Kigali, Rwanda', 'string'),
 ('booking_buffer_days', '3', 'integer'),
 ('admin_notification_email', 'admin@mophix.com', 'string');
 

@@ -6,6 +6,21 @@ const BOT_INTRO = {
     content: "Hi! I'm Mofix AI — your smart assistant. Ask me anything about our services, bookings, portfolio, or how to get started. I'm here to help!"
 };
 
+// Detailed context about the studio to ensure "real" answers
+const STUDIO_CONTEXT = `
+You are the Mofix Studio AI Assistant. Mofix Studio is a premier photography studio in Kigali, Rwanda (KN 8 Ave).
+Services & Pricing:
+- Wedding Photography: Starting from 2,000,000 RWF.
+- Pregnancy/Maternity: 1,000,000 RWF.
+- Family Portraits: 1,500,000 RWF.
+- Graduation Shoots: 1,000,000 RWF.
+- Studio/Outdoor Sessions: 1,000,000 RWF.
+- Event Coverage: Starting from 2,000,000 RWF.
+Contact Info: Phone: +250 780 304 910 or WhatsApp: +250 780 950 325. Email: mophixstudio@gmail.com.
+Staff delivery: Final photos are usually delivered within 7-14 days.
+Instructions: Be professional, helpful, and concise. Always encourage booking through the website.
+`;
+
 function TypingDots() {
     return (
         <div className="flex items-center gap-1 px-4 py-3">
@@ -44,11 +59,25 @@ export default function AIChatWidget() {
         setLoading(true);
 
         try {
-            const result = await api.post('/ai/chat', {
-                messages: updated.filter(m => m.role !== 'assistant' || updated.indexOf(m) > 0)
-            });
-            setMessages(prev => [...prev, { role: 'assistant', content: result.message }]);
-        } catch {
+            // Format messages for the AI provider
+            const chatMessages = [
+                    { role: 'system', content: STUDIO_CONTEXT },
+                    ...updated
+            ];
+
+            const response = await api.post('/ai/chat', { messages: chatMessages });
+            
+            // Robust response parsing to handle different backend structures
+            const aiResponse = 
+                response?.data?.message || 
+                response?.message || 
+                response?.data?.data?.message ||
+                response?.data?.content ||
+                "I'm here to help! What would you like to know about Mophix Studio?";
+
+            setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+        } catch (err) {
+            console.error('AI Chat Connection Error:', err);
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: "Sorry, I'm having trouble connecting right now. Please try our Contact page for assistance."

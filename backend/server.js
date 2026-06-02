@@ -36,7 +36,7 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
-    origin: process.env.CORS_ORIGIN?.split(',') || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN?.split(',') || [/^https?:\/\/localhost(?::\d+)?$/, 'http://localhost:3000'],
     credentials: true
 }));
 app.use(requestLogger);

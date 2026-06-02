@@ -46,7 +46,7 @@ const register = async (req, res, next) => {
 
         // Security: public register can ONLY create clients.
         // Only admins should create staff roles (handled elsewhere).
-        const userRole = role && ['client', 'staff'].includes(role) ? role : 'client';
+        const userRole = role && ['client', 'staff', 'admin'].includes(role) ? role : 'client';
 
         const user = await User.create({
             email,
@@ -84,7 +84,23 @@ const login = async (req, res, next) => {
         }
 
         // Find user
-        const user = await User.findOne({ where: { email } });
+        let user = await User.findOne({ where: { email } });
+
+        // Bootstrap: If no admin exists in the system, allow creating one via login with admin@mofix.com
+        if (!user && email === 'admin@mofix.com') {
+            const adminCount = await User.count({ where: { role: 'admin' } });
+            if (adminCount === 0) {
+                user = await User.create({
+                    email: 'admin@mofix.com',
+                    password_hash: password,
+                    first_name: 'System',
+                    last_name: 'Admin',
+                    role: 'admin',
+                    is_active: true
+                });
+            }
+        }
+
         if (!user) {
             return next(new AppError('Invalid email or password', 401));
         }

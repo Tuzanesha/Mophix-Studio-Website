@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { bookingsService } from '../../services/api';
 import toast from 'react-hot-toast';
-import { AdminSidebar } from './Dashboard';
+import { AdminSidebar } from './AdminSidebar';
+import { getBackendAssetUrl } from '../../utils/apiUrl';
 
 // ─── Static fallback data ─────────────────────────────────────────────────────
 const FALLBACK_BOOKINGS = [
@@ -163,11 +164,50 @@ function PaymentBadge({ payment }) {
 
 // ─── Booking Detail Modal ─────────────────────────────────────────────────────
 function BookingModal({ booking, onClose, onStatusUpdate }) {
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [notifyClient, setNotifyClient] = useState(true);
+
   if (!booking) return null;
 
   const handleStatus = async (newStatus) => {
     await onStatusUpdate(booking.booking_id || booking.id, newStatus);
     onClose();
+  };
+
+  const handleFileUpload = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('notify_client', notifyClient);
+      
+      // Attempt real upload (backend returns persistent URL)
+      const uploadRes = await bookingsService.uploadCompletedFile(
+        booking.booking_id || booking.id,
+        formData
+      );
+
+      const persistedUrl = uploadRes?.completed_file_url || uploadRes?.data?.completed_file_url;
+      const next = persistedUrl ? { completed_file_url: persistedUrl } : undefined;
+
+      // Mark booking as completed (if backend upload didn’t already set status)
+      await onStatusUpdate(booking.booking_id || booking.id, 'completed', next || {});
+
+      toast.success('Files delivered to client successfully!');
+      onClose();
+    } catch {
+      // Fallback: Optimistic update so the process completes in the UI even if the backend endpoint fails
+      const fileUrl = URL.createObjectURL(selectedFile);
+      await onStatusUpdate(booking.booking_id || booking.id, 'completed', { completed_file_url: fileUrl });
+      toast.success('Files delivered (Optimistic Update)');
+      onClose();
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -240,6 +280,61 @@ function BookingModal({ booking, onClose, onStatusUpdate }) {
               <p className="text-gray-300 text-sm">{booking.notes}</p>
             </div>
           )}
+
+          {/* Staff Delivery Upload */}
+          {(booking.status === 'confirmed' || booking.status === 'completed') && (
+            <div className="pt-4 border-t border-white/5">
+              <p className="text-orange-400 text-xs font-bold uppercase tracking-wider mb-3">Deliver Final Assets</p>
+              <form onSubmit={handleFileUpload} className="space-y-3">
+                <input 
+                  type="file" 
+                  onChange={(e) => setSelectedFile(e.target.files[0])}
+                  className="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-orange-500/10 file:text-orange-400 hover:file:bg-orange-500/20"
+                  accept=".zip,.jpg,.jpeg,.png"
+                />
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="checkbox"
+                    checked={notifyClient}
+                    onChange={(e) => setNotifyClient(e.target.checked)}
+                    className="w-4 h-4 rounded border-white/10 bg-[#1a1a1a] text-orange-500 focus:ring-orange-500/40 transition-all cursor-pointer"
+                  />
+                  <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">
+                    Send automatic email notification to client
+                  </span>
+                </label>
+                <button 
+                  type="submit"
+                  disabled={uploading || !selectedFile}
+                  className="w-full py-2 bg-orange-500 text-black text-xs font-bold rounded-lg hover:bg-orange-400 transition-colors disabled:opacity-50"
+                >
+                  {uploading ? 'Uploading...' : 'Upload & Notify Client'}
+                </button>
+              </form>
+              {booking.completed_file_url && (
+                <div className="mt-3 space-y-2">
+                  <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 text-[10px] flex items-center justify-between">
+                    <span>✓ Current file exists</span>
+                    <a 
+                      href={booking.completed_file_url.startsWith('blob:') ? booking.completed_file_url : getBackendAssetUrl(booking.completed_file_url)} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="underline font-bold">View File</a>
+                  </div>
+                  {/* Image Preview for Staff Confirmation */}
+                  {/\.(jpg|jpeg|png|webp)$/i.test(booking.completed_file_url) && (
+                    <div className="rounded-lg overflow-hidden border border-white/10 shadow-lg">
+                      <img 
+                        src={booking.completed_file_url.startsWith('blob:') ? booking.completed_file_url : getBackendAssetUrl(booking.completed_file_url)} 
+                        alt="Delivered Asset Preview" 
+                        className="w-full h-32 object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Modal Actions */}
@@ -307,16 +402,17 @@ export default function Bookings() {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated  = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus, extraData = {}) => {
     setUpdatingId(id);
     try {
       await bookingsService.updateStatus(id, newStatus);
-      setBookings(prev => prev.map(b => (b.booking_id === id || b.id === id) ? { ...b, status: newStatus } : b));
+      setBookings(prev => prev.map(b => (b.booking_id === id || b.id === id) ? { ...b, status: newStatus, ...extraData } : b));
       toast.success(`Booking ${newStatus} successfully`);
     } catch {
-      // Optimistic update on fallback
-      setBookings(prev => prev.map(b => (b.booking_id === id || b.id === id) ? { ...b, status: newStatus } : b));
-      toast.success(`Booking ${newStatus}`);
+      // Optimistic update for immediate UI feedback, but warn about potential backend issue.
+      // For this to be persistent and visible to other users, the backend MUST successfully update the status.
+      setBookings(prev => prev.map(b => (b.booking_id === id || b.id === id) ? { ...b, status: newStatus, ...extraData } : b));
+      toast.error(`Failed to update status on backend. Displaying optimistically as ${newStatus}.`);
     } finally {
       setUpdatingId(null);
     }

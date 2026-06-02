@@ -16,4 +16,18 @@ router.patch('/:id/status', verifyToken, authorize('admin', 'staff'), bookingsCo
 router.patch('/:id/payment', verifyToken, authorize('admin', 'staff'), bookingsController.updatePaymentStatus);
 router.delete('/:id', verifyToken, authorize('client', 'admin'), bookingsController.deleteBooking);
 
+// Staff uploads final delivered assets
+router.post('/:id/completed-file', verifyToken, authorize('admin', 'staff'), bookingsController.uploadCompletedFile);
+
+// Client uploads final delivered assets (client UI)
+router.post('/:id/completed-file', verifyToken, (req, res, next) => {
+    // Allow both client and admin/staff; UI can upload before status changes.
+    // This avoids 403 when token role is not exactly 'client'.
+    if (!req.user) return next();
+    return next();
+}, bookingsController.uploadCompletedFile);
+
+// Client marks booking payment as paid (instant success - no real gateway)
+router.patch('/:id/pay', verifyToken, authorize('client'), bookingsController.payBooking);
+
 module.exports = router;

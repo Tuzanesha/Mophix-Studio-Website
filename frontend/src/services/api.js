@@ -135,6 +135,8 @@ export const bookingsService = {
   create: (data) => request('/bookings', { method: 'POST', body: data }),
   updateStatus: (id, status, notes) => request(`/bookings/${id}/status`, { method: 'PATCH', body: { status, notes } }),
   updatePaymentStatus: (id, payment_status) => request(`/bookings/${id}/payment`, { method: 'PATCH', body: { payment_status } }),
+  uploadCompletedFile: (id, formData) => upload(`/bookings/${id}/completed-file`, formData),
+  pay: (id, { mobile_number } = {}) => request(`/bookings/${id}/pay`, { method: 'PATCH', body: { mobile_number } }),
   delete: (id) => request(`/bookings/${id}`, { method: 'DELETE' }),
   getCalendar: (month, year) => request(`/bookings/calendar/${month}/${year}`, { method: 'GET' }),
 };

@@ -16,7 +16,7 @@
     "booking",
     "gallery"
   ],
-  "author": "Kigali Business Lab",
+  "author": "Mophix Studio Team",
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

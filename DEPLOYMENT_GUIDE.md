@@ -628,4 +628,4 @@ mysql -u root -p mophix_studio < ../database/schema.sql
 
 Generated for: Mophix Studio Photography Website
 Date: May 2026
-Prepared by: Kigali Business Lab
+Prepared by: Mophix Studio

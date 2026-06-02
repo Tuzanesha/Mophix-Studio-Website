@@ -9,7 +9,7 @@ export default function ClientSidebar() {
     try {
       logout();
     } finally {
-      navigate('/login');
+      navigate('/'); // Redirect to home page after logout
     }
   };
 
@@ -27,21 +27,21 @@ export default function ClientSidebar() {
         <nav className="flex-1 p-4 space-y-2">
           <Link
             to="/my-bookings"
-            className="block px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5"
+            className="block px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
           >
             My Bookings
           </Link>
 
           <Link
             to="/profile"
-            className="block px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5"
+            className="block px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
           >
             My Profile
           </Link>
 
           <Link
             to="/services"
-            className="block px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5"
+            className="block px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-orange-400 hover:bg-orange-500/10 transition-colors"
           >
             Book New Session
           </Link>
@@ -50,7 +50,7 @@ export default function ClientSidebar() {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="w-full px-4 py-3 rounded-xl text-sm font-medium text-red-300 hover:text-red-200 hover:bg-red-500/10 transition-colors"
+            className="w-full px-4 py-3 rounded-xl text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition-colors"
           >
             Logout
           </button>

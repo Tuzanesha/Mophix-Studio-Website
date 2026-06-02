@@ -30,26 +30,28 @@ const Footer = () => {
   return (
     <footer className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#080808' }}>
       {/* CTA Banner */}
-      <div
-        className="py-16 text-center relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.12) 0%, transparent 50%, rgba(249,115,22,0.06) 100%)' }}
-      >
-        <div className="container mx-auto px-4">
-          <p className="section-tag justify-center mb-4">Ready to Begin?</p>
-          <h2 className="section-title text-center mb-4">Let's Capture Your Story</h2>
-          <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
-            Book your session today and let Mophix Studio turn your moments into timeless art.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/register" className="btn-primary">
-              Book a Session
-            </Link>
-            <Link to="/contact" className="btn-secondary">
-              Contact Us
-            </Link>
+      {!isAuthenticated && (
+        <div
+          className="py-16 text-center relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.12) 0%, transparent 50%, rgba(249,115,22,0.06) 100%)' }}
+        >
+          <div className="container mx-auto px-4">
+            <p className="section-tag justify-center mb-4">Ready to Begin?</p>
+            <h2 className="section-title text-center mb-4">Let's Capture Your Story</h2>
+            <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
+              Book your session today and let Mophix Studio turn your moments into timeless art.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/register" className="btn-primary">
+                Book a Session
+              </Link>
+              <Link to="/contact" className="btn-secondary">
+                Contact Us
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Footer */}
       {!isAuthenticated && (
@@ -138,8 +140,7 @@ const Footer = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">KG Kaserenge, Kigali, Rwanda</p>
-                  <p className="text-gray-600 text-xs mt-0.5">KK 559 St</p>
+                  <p className="text-gray-400 text-sm">KN 8 Ave, Kigali, Rwanda</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -149,11 +150,11 @@ const Footer = () => {
                   </svg>
                 </div>
                 <div>
-                  <a href="tel:+250788242290" className="text-gray-400 text-sm hover:text-orange-400 transition-colors block">
-                    +(250) 788 242290
+                  <a href="tel:+250780304910" className="text-gray-400 text-sm hover:text-orange-400 transition-colors block">
+                    +250 780 304 910 (Call)
                   </a>
-                  <a href="tel:+250798696342" className="text-gray-600 text-xs hover:text-orange-400 transition-colors block">
-                    +(250) 798 696342
+                  <a href="https://wa.me/250780950325" target="_blank" rel="noopener noreferrer" className="text-gray-400 text-sm hover:text-orange-400 transition-colors block">
+                    +250 780 950 325 (WhatsApp)
                   </a>
                 </div>
               </div>
@@ -163,8 +164,8 @@ const Footer = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <a href="mailto:kblteam@kbl.rw" className="text-gray-400 text-sm hover:text-orange-400 transition-colors">
-                  kblteam@kbl.rw
+                <a href="mailto:mophixstudio@gmail.com" className="text-gray-400 text-sm hover:text-orange-400 transition-colors">
+                  mophixstudio@gmail.com
                 </a>
               </div>
               <div className="flex items-start gap-3 pt-2">
@@ -186,7 +187,7 @@ const Footer = () => {
         <div className="mt-14 pt-6 border-t flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
           <p className="text-gray-600 text-sm text-center">
             © {year} Mophix Studio. All rights reserved. Built by{' '}
-            <span className="text-orange-400">Kigali Business Lab</span>.
+            <span className="text-orange-400">Mophix Studio</span>.
           </p>
           <div className="flex items-center gap-6">
             <Link to="/contact" className="text-gray-600 text-xs hover:text-gray-400 transition-colors">

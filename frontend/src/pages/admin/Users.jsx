@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { usersService } from '../../services/api';
 import toast from 'react-hot-toast';
-import { AdminSidebar } from './Dashboard';
+import { AdminSidebar } from './AdminSidebar';
 
 // ─── Fallback Data ────────────────────────────────────────────────────────────
 const FALLBACK_USERS = [
@@ -247,8 +247,7 @@ export default function Users() {
 return (
     <div className="flex min-h-screen bg-[#0a0a0a]">
       <AdminSidebar />
-
-      <main className="ml-64 flex-1 p-8">
+      <main className="ml-64 flex-1 py-8 px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white">User Management</h1>
@@ -420,7 +419,7 @@ return (
                       </td>
 
                       {/* Phone */}
-                      <td className="text-gray-400 text-sm whitespace-nowrap">{user.phone}</td>
+                      {/* <td className="text-gray-400 text-sm whitespace-nowrap">{user.phone}</td> */}
 
                       {/* Role badge */}
                       <td><RoleBadge role={user.role} /></td>

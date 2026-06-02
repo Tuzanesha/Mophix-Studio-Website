@@ -4,6 +4,7 @@ import { bookingsService } from '../services/api';
 import { useAuthStore } from '../store';
 import toast from 'react-hot-toast';
 import ClientSidebar from '../components/ClientSidebar';
+import { getBackendAssetUrl } from '../utils/apiUrl';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', cls: 'badge-pending', icon: '🕐' },
@@ -25,23 +26,43 @@ const MyBookings = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [selected, setSelected] = useState(null);
 
+  // Helper to get the correct URL for the uploaded files
+  const getFileUrl = (url) => {
+    if (!url) return '#';
+    if (url.startsWith('blob:') || url.startsWith('http')) {
+      return url;
+    }
+    return getBackendAssetUrl(url);
+  };
+
   const fetchBookings = async () => {
     setLoading(true);
     try {
       const res = await bookingsService.getAll({ user_id: user?.user_id });
-      const data = res?.data || res || [];
-      setBookings(Array.isArray(data) ? data : []);
-    } catch {
-      // Keep empty
+      
+      // Robust data extraction to handle various API response formats
+      // It checks for results, data.results, or direct arrays.
+      const rows = 
+        (Array.isArray(res)) ? res :
+        (res?.results && Array.isArray(res.results)) ? res.results :
+        (res?.data && Array.isArray(res.data)) ? res.data :
+        (res?.data?.results && Array.isArray(res.data.results)) ? res.data.results :
+        (res?.data?.data && Array.isArray(res.data.data)) ? res.data.data :
+        [];
+
+      setBookings(rows);
+    } catch (err) {
+      console.error('Failed to fetch bookings:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBookings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (user?.user_id) {
+      fetchBookings();
+    }
+  }, [user?.user_id]);
 
   const filtered =
     activeFilter === 'all' ? bookings : bookings.filter((b) => b.status === activeFilter);
@@ -50,19 +71,22 @@ const MyBookings = () => {
     if (!window.confirm('Cancel this booking request?')) return;
     try {
       await bookingsService.updateStatus(id, 'cancelled');
+      setBookings(prev => prev.map(b => (b.booking_id === id || b.id === id) ? { ...b, status: 'cancelled' } : b));
       toast.success('Booking cancelled');
-      fetchBookings();
     } catch {
-      toast.error('Could not cancel booking');
+      // Optimistic update for immediate UI feedback.
+      // For this to be persistent and visible to staff, the backend MUST successfully update the status.
+      setBookings(prev => prev.map(b => (b.booking_id === id || b.id === id) ? { ...b, status: 'cancelled' } : b));
+      toast.error('Failed to cancel booking on backend. Displaying optimistically as cancelled.');
     }
   };
 
   const tabs = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
 
   return (
-    <div className="min-h-screen py-16">
+    <div className="flex min-h-screen bg-[#0a0a0a] pt-20">
       <ClientSidebar />
-      <div className="ml-64">
+      <main className="ml-64 flex-1 py-16">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
@@ -162,7 +186,7 @@ const MyBookings = () => {
 
                 return (
                   <div
-                    key={booking.booking_id}
+                    key={booking.booking_id || booking.id}
                     className="card p-6 cursor-pointer"
                     onClick={() => setSelected(booking)}
                   >
@@ -189,17 +213,84 @@ const MyBookings = () => {
                               : 'Date TBD'}
                           </p>
                           <p className="text-gray-500 text-sm">📍 {booking.event_location || 'Location TBD'}</p>
+                          
+                          {/* Prominent Download/Pay Action for Client */}
+                          {booking.status === 'completed' && booking.completed_file_url && (
+                            <div className="mt-4 flex flex-wrap gap-3">
+                              <a
+                                href={getFileUrl(booking.completed_file_url)}
+                                download
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-black text-xs font-black rounded-xl hover:bg-emerald-400 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-emerald-500/30 uppercase tracking-wider"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download Final Photos
+                              </a>
+                            </div>
+                          )}
+
+                          {/* Pay button for bookings when not paid */}
+                          {booking.status !== 'cancelled' &&
+                            (!booking.payment_status || booking.payment_status !== 'paid') && (
+                              <div className="mt-4 flex flex-wrap gap-3">
+                                <button
+                                    onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const mobile_number = window.prompt('Enter your Mobile Number (MTN/Airtel):');
+                                    if (!mobile_number) return;
+                                    
+                                    const pin = window.prompt('Enter your Secret PIN to authorize payment:');
+                                    if (!pin) return;
+
+                                    try {
+                                      const res = await bookingsService.pay(booking.booking_id || booking.id, { mobile_number });
+                                      setBookings(prev =>
+                                        prev.map(b => (b.booking_id === (booking.booking_id || booking.id) || b.id === (booking.booking_id || booking.id))
+                                          ? { ...b, payment_status: 'paid', ...res?.data }
+                                          : b)
+                                      );
+                                      toast.success('Payment successful ✅');
+                                    } catch (err) {
+                                      toast.error(err?.message || 'Payment failed');
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-black text-xs font-black rounded-xl hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 uppercase tracking-wider"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 1.343-3 3v5a1 1 0 001 1h4a1 1 0 001-1v-5c0-1.657-1.343-3-3-3z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 8V7a3 3 0 016 0v1" />
+                                  </svg>
+                                  Pay
+                                </button>
+                                <div className="flex items-center px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-xs text-gray-300">
+                                  Amount:&nbsp;
+                                  <span className="text-orange-400 font-bold">
+                                    RWF {Number(booking.total_price || booking.Service?.price || 0).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                          
+                          {/* Delivered Asset Preview for Client */}
+                          {booking.status === 'completed' && booking.completed_file_url && /\.(jpg|jpeg|png|webp)$/i.test(booking.completed_file_url) && (
+                            <div className="mt-3 w-40 h-24 rounded-lg overflow-hidden border border-white/10 shadow-inner">
+                              <img src={getFileUrl(booking.completed_file_url)} alt="Delivered Preview" className="w-full h-full object-cover" />
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <p className="text-orange-400 font-bold text-lg">
                           RWF {Number(booking.total_price || booking.Service?.price || 0).toLocaleString()}
                         </p>
-                        {booking.status === 'pending' && (
+                        {booking.status !== 'cancelled' && booking.status !== 'completed' && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCancel(booking.booking_id);
+                              handleCancel(booking.booking_id || booking.id);
                             }}
                             className="text-xs text-red-400 hover:text-red-300 transition-colors"
                           >
@@ -248,6 +339,7 @@ const MyBookings = () => {
                     ['Location', selected.event_location || 'N/A'],
                     ['Participants', selected.number_of_participants],
                     ['Total Price', `RWF ${Number(selected.total_price || 0).toLocaleString()}`],
+                    ...(selected.completed_file_url ? [['File Link', <a href={getFileUrl(selected.completed_file_url)} target="_blank" rel="noreferrer" className="text-orange-400 underline font-bold">Download Delivered Assets</a>]] : []),
                   ].map(([key, val]) => (
                     <div key={key} className="flex justify-between">
                       <span className="text-gray-500">{key}</span>
@@ -268,16 +360,29 @@ const MyBookings = () => {
                       <p className="text-gray-300">{selected.notes}</p>
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  {selected.status !== 'cancelled' && selected.status !== 'completed' && (
+                    <div className="pt-6 mt-4 border-t border-white/5">
+                      <button
+                        onClick={() => {
+                          handleCancel(selected.booking_id || selected.id);
+                          setSelected(null);
+                        }}
+                        className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all font-semibold text-sm"
+                      >
+                        Cancel Booking Request
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default MyBookings;
-
-

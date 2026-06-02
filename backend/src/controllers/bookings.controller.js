@@ -7,13 +7,30 @@ const { Op } = require('sequelize');
 // Get all bookings (with filters)
 const getAllBookings = async (req, res, next) => {
     try {
-        const { status, user_id, page = 1, limit = 20 } = req.query;
+        const { status, page = 1, limit = 20 } = req.query;
         const where = {};
 
         if (status) where.status = status;
-        if (user_id && req.user.role === 'client') {
+
+        // Robust scoping:
+        // 1) Prefer authenticated client id (req.user.user_id)
+        // 2) Fallback to explicit user_id query param (frontend passes it)
+        if (req.user?.user_id) {
             where.user_id = req.user.user_id;
+        } else if (req.query.user_id) {
+            where.user_id = req.query.user_id;
         }
+
+        // Admin/staff can optionally request all bookings.
+        if (req.user?.role === 'admin' || req.user?.role === 'staff') {
+            if (req.query.user_id) {
+                where.user_id = req.query.user_id;
+            } else {
+                delete where.user_id;
+            }
+        }
+
+
 
         const offset = (page - 1) * limit;
 
@@ -81,6 +98,9 @@ const createBooking = async (req, res, next) => {
             preferred_time_end
         } = req.body;
 
+        // Debugging: Log user and body to ensure data is received correctly
+        console.log('createBooking: req.user:', req.user);
+        console.log('createBooking: req.body:', req.body);
         // Get service for pricing
         const service = await Service.findByPk(service_id);
         if (!service) {
@@ -234,6 +254,100 @@ const getBookingsCalendar = async (req, res, next) => {
     }
 };
 
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// multer storage to backend/uploads
+const uploadsDir = path.join(__dirname, '../../uploads');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        try {
+            if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+            cb(null, uploadsDir);
+        } catch (e) {
+            cb(e);
+        }
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname) || '';
+        const base = path.basename(file.originalname, ext);
+        const safeBase = base.replace(/[^a-z0-9\-_]/gi, '_').slice(0, 60);
+        const unique = `${Date.now()}_${Math.round(Math.random() * 1e9)}`;
+        cb(null, `${safeBase}_${unique}${ext}`);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
+});
+
+// Staff upload delivered final file
+const uploadCompletedFile = (req, res, next) => {
+    const handler = upload.single('file');
+    handler(req, res, async (err) => {
+        if (err) return next(err);
+        try {
+            const { id } = req.params;
+            if (!req.file) return next(new AppError('No file uploaded', 400));
+
+            const booking = await Booking.findByPk(id);
+            if (!booking) return next(new AppError('Booking not found', 404));
+
+            const completed_file_url = `/uploads/${req.file.filename}`;
+
+            // IMPORTANT:
+            // completed_file_url is stored as the URL path (e.g. /uploads/xxx.jpeg).
+            // Frontend must prefix backend origin for absolute access.
+            await booking.update({
+                completed_file_url,
+                status: 'completed'
+            });
+
+            return res.json({
+                success: true,
+                message: 'Completed file uploaded successfully',
+                completed_file_url
+            });
+        } catch (e) {
+            next(e);
+        }
+    });
+};
+
+// Client pay (instant success)
+const payBooking = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { mobile_number } = req.body;
+
+        if (!mobile_number) return next(new AppError('mobile_number is required', 400));
+
+        const booking = await Booking.findByPk(id);
+        if (!booking) return next(new AppError('Booking not found', 404));
+
+        // Ensure client owns the booking
+        if (req.user.role === 'client' && booking.user_id !== req.user.user_id) {
+            return next(new AppError('Forbidden', 403));
+        }
+
+        await booking.update({
+            payment_status: 'paid',
+            status: booking.status === 'completed' ? 'completed' : booking.status
+        });
+
+        return res.json({
+            success: true,
+            message: 'Payment successful',
+            data: booking
+        });
+    } catch (e) {
+        next(e);
+    }
+};
+
 module.exports = {
     getAllBookings,
     getBookingById,
@@ -241,5 +355,7 @@ module.exports = {
     updateBookingStatus,
     updatePaymentStatus,
     deleteBooking,
-    getBookingsCalendar
+    getBookingsCalendar,
+    uploadCompletedFile,
+    payBooking
 };

@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 // Layouts
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 import AIChatWidget from './components/AIChatWidget';
 
 // Public Pages
@@ -27,8 +28,8 @@ import MyBookings from './pages/MyBookings';
 import MyProfile from './pages/MyProfile';
 
 // Admin Pages
-import StaffDashboard from './pages/admin/Dashboard';
-import AdminDashboard from './pages/admin/Dashboard';
+import StaffDashboard from './pages/admin/StaffDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminGalleries from './pages/admin/Galleries';
 import AdminBookings from './pages/admin/Bookings';
 import AdminTestimonials from './pages/admin/Testimonials';
@@ -44,8 +45,11 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         return <Navigate to="/login" replace />;
     }
 
-    if (requiredRole && user?.role !== requiredRole && user?.role !== 'admin') {
-        return <Navigate to="/" replace />;
+    if (requiredRole) {
+        const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        if (!allowedRoles.includes(user?.role)) {
+            return <Navigate to="/" replace />;
+        }
     }
 
     return children;
@@ -70,6 +74,7 @@ function App() {
 
     return (
         <Router>
+            <ScrollToTop />
             <div className="flex flex-col min-h-screen bg-black text-white">
                 <Navbar />
                 
@@ -80,7 +85,7 @@ function App() {
                             isAuthenticated ? (
                                 user?.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> :
                                 user?.role === 'staff' ? <Navigate to="/staff/dashboard" replace /> :
-                                <Home />
+                                <Navigate to="/my-bookings" replace />
                             ) : <Home />
                         } />
                         <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
@@ -144,7 +149,7 @@ function App() {
                         <Route
                             path="/admin/galleries"
                             element={
-                                <ProtectedRoute requiredRole="staff">
+                                <ProtectedRoute requiredRole={['admin', 'staff']}>
                                     <AdminGalleries />
                                 </ProtectedRoute>
                             }
@@ -152,7 +157,7 @@ function App() {
                         <Route
                             path="/admin/bookings"
                             element={
-                                <ProtectedRoute requiredRole="staff">
+                                <ProtectedRoute requiredRole={['admin', 'staff']}>
                                     <AdminBookings />
                                 </ProtectedRoute>
                             }
@@ -160,7 +165,7 @@ function App() {
                         <Route
                             path="/admin/testimonials"
                             element={
-                                <ProtectedRoute requiredRole="admin">
+                                <ProtectedRoute requiredRole={['admin', 'staff']}>
                                     <AdminTestimonials />
                                 </ProtectedRoute>
                             }
@@ -168,7 +173,7 @@ function App() {
                         <Route
                             path="/admin/inquiries"
                             element={
-                                <ProtectedRoute requiredRole="staff">
+                                <ProtectedRoute requiredRole={['admin', 'staff']}>
                                     <AdminInquiries />
                                 </ProtectedRoute>
                             }
@@ -176,7 +181,7 @@ function App() {
                         <Route
                             path="/admin/blog"
                             element={
-                                <ProtectedRoute requiredRole="admin">
+                                <ProtectedRoute requiredRole={['admin', 'staff']}>
                                     <AdminBlog />
                                 </ProtectedRoute>
                             }

@@ -105,15 +105,6 @@ const Navbar = () => {
                     My Bookings
                   </Link>
                 )}
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-                >
-                  <div className="w-7 h-7 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 font-semibold text-xs">
-                    {user?.first_name?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <span>{user?.first_name}</span>
-                </Link>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-sm text-gray-400 hover:text-red-400 border border-white/10 rounded-lg hover:border-red-500/30 transition-all duration-200"
@@ -184,13 +175,6 @@ const Navbar = () => {
                           Admin Panel
                         </Link>
                       )}
-                      <Link
-                        to="/profile"
-                        onClick={() => setMenuOpen(false)}
-                        className="block px-4 py-3 text-sm text-gray-300 rounded-xl hover:bg-white/5"
-                      >
-                        My Profile
-                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-3 text-sm text-red-400 rounded-xl hover:bg-red-500/10"

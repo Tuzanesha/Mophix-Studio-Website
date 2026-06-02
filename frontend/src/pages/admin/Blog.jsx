@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { blogService } from '../../services/api';
 import { useAuthStore } from '../../store';
+import { AdminSidebar } from './AdminSidebar';
 import toast from 'react-hot-toast';
 
 const AdminBlog = () => {
@@ -245,13 +247,18 @@ const AdminBlog = () => {
   const draftCount = posts.filter(p => p.status === 'draft').length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white py-12">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold font-display text-orange-500 tracking-wide">Blog Management</h1>
-            <p className="text-gray-400 mt-1">Publish tips, guides, stories and updates from Mophix Studio</p>
-          </div>
+    <div className="flex min-h-screen bg-[#0a0a0a]">
+      <AdminSidebar />
+      <main className="ml-64 flex-1 p-8 text-white">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+              <Link to="/admin/dashboard" className="text-sm text-gray-400 hover:text-orange-400 transition mb-3 inline-block">
+                ← Back to Dashboard
+              </Link>
+              <h1 className="text-3xl font-bold font-display text-orange-500 tracking-wide">Blog Management</h1>
+              <p className="text-gray-400 mt-1">Publish tips, guides, stories and updates from Mophix Studio</p>
+            </div>
           <button
             onClick={handleOpenCreateModal}
             className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-5 py-2.5 rounded-lg transition duration-200 shadow-lg shadow-orange-500/20 flex items-center gap-2 self-start md:self-auto"
@@ -517,6 +524,7 @@ const AdminBlog = () => {
           </div>
         )}
       </div>
+      </main>
     </div>
   );
 };

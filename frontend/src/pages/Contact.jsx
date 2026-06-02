@@ -24,7 +24,7 @@ const CONTACT_INFO = [
       </svg>
     ),
     label: 'Studio Address',
-    lines: ['KG Kaserenge, KK 559 st', 'Kigali, Rwanda'],
+    lines: ['KN 8 Ave', 'Kigali, Rwanda'],
   },
   {
     icon: (
@@ -34,7 +34,7 @@ const CONTACT_INFO = [
       </svg>
     ),
     label: 'Phone Numbers',
-    lines: ['+(250) 788 242 290', '+(250) 798 696 342'],
+    lines: ['+250 780 304 910 (Call)', '+250 780 950 325 (WhatsApp)'],
   },
   {
     icon: (
@@ -44,7 +44,7 @@ const CONTACT_INFO = [
       </svg>
     ),
     label: 'Email Address',
-    lines: ['kblteam@kbl.rw'],
+    lines: ['mophixstudio@gmail.com'],
   },
   {
     icon: (
@@ -347,7 +347,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">Mophix Studio</p>
-                  <p className="text-white/40 text-xs mt-0.5">KG Kaserenge, KK 559 st, Kigali</p>
+                  <p className="text-white/40 text-xs mt-0.5">KN 8 Ave, Kigali, Rwanda</p>
                 </div>
                 <a
                   href="https://maps.google.com/?q=Kigali+Rwanda"

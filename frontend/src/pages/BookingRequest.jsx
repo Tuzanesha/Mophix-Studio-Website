@@ -72,7 +72,7 @@ const BookingRequest = () => {
 
     setSubmitting(true);
     try {
-      await bookingsService.create(form);
+      await bookingsService.create({ ...form, service_id: parseInt(form.service_id, 10) });
       toast.success('Booking request submitted successfully! We\'ll be in touch soon. 📸');
       navigate('/my-bookings');
     } catch (err) {
@@ -284,8 +284,11 @@ const BookingRequest = () => {
             <div className="card p-6">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-orange-400 mb-3">Need Help?</h3>
               <p className="text-gray-400 text-sm mb-3">Call us directly to discuss your session:</p>
-              <a href="tel:+250788242290" className="text-orange-400 font-semibold text-sm hover:text-orange-300 transition-colors">
-                +(250) 788 242290
+              <a href="tel:+250780304910" className="text-orange-400 font-semibold text-sm hover:text-orange-300 transition-colors block mb-1">
+                +250 780 304 910 (Call)
+              </a>
+              <a href="https://wa.me/250780950325" target="_blank" rel="noopener noreferrer" className="text-orange-400 font-semibold text-sm hover:text-orange-300 transition-colors block">
+                +250 780 950 325 (WhatsApp)
               </a>
             </div>
           </div>

@@ -50,9 +50,9 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="min-h-screen py-16">
+    <div className="flex min-h-screen bg-[#0a0a0a] pt-20">
       <ClientSidebar />
-      <div className="ml-64">
+      <main className="ml-64 flex-1 py-16">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="mb-10">
             <p className="section-tag">Account Settings</p>
@@ -188,10 +188,9 @@ const MyProfile = () => {
             </form>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default MyProfile;
-

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { contactService } from '../../services/api';
+import { AdminSidebar } from './AdminSidebar';
 import toast from 'react-hot-toast';
 
 const AdminInquiries = () => {
@@ -194,11 +196,18 @@ const AdminInquiries = () => {
   const unreadCount = inquiries.filter(inq => inq.status === 'new').length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white py-12">
-      <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold font-display text-orange-500 tracking-wide flex items-center gap-3">
-            Contact Inquiries
+    <div className="flex min-h-screen bg-[#0a0a0a]">
+      <AdminSidebar />
+      <main className="ml-64 flex-1 p-8 text-white">
+        <div className="container mx-auto px-4">
+          <div className="mb-8">
+            <div className="mb-4">
+              <Link to="/admin/dashboard" className="text-sm text-gray-400 hover:text-orange-400 transition">
+                ← Back to Dashboard
+              </Link>
+            </div>
+            <h1 className="text-3xl font-bold font-display text-orange-500 tracking-wide flex items-center gap-3">
+              Contact Inquiries
             {unreadCount > 0 && (
               <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
                 {unreadCount} New
@@ -414,6 +423,7 @@ const AdminInquiries = () => {
           </div>
         )}
       </div>
+      </main>
     </div>
   );
 };

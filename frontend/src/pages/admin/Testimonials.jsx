@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AdminSidebar } from './AdminSidebar';
 import toast from 'react-hot-toast';
 import { testimonialsService } from '../../services/api';
 
@@ -197,14 +198,16 @@ export default function Testimonials() {
     });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white px-6 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="flex min-h-screen bg-[#0a0a0a]">
+      <AdminSidebar />
+      <main className="ml-64 flex-1 p-8 text-white">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
               <Link
-                to="/admin"
+                to="/admin/dashboard"
                 className="text-gray-500 hover:text-orange-400 transition-colors text-sm"
               >
                 Dashboard
@@ -428,6 +431,7 @@ export default function Testimonials() {
           ))}
         </div>
       )}
+      </main>
     </div>
   );
 }
