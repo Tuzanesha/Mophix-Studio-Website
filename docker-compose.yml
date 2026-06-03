@@ -1,0 +1,24 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mophix_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: mophix_root
+      MYSQL_DATABASE: mophix_studio
+      MYSQL_USER: mophix_user
+      MYSQL_PASSWORD: mophix_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pmophix_root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_data:

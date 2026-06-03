@@ -2,6 +2,16 @@
 
 This setup keeps your current React app, but proxies API calls through the React dev server so you can open just one URL in the browser.
 
+## 0) Start the database (Docker)
+```bash
+docker compose up -d
+```
+This starts MySQL 8.0 on port 3306 and auto-loads the schema on first run.
+Wait for it to be healthy before starting the backend:
+```bash
+docker compose ps   # Status should show "healthy"
+```
+
 ## 1) Backend
 1. Open a terminal
 2. Run:
