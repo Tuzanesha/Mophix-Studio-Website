@@ -22,37 +22,21 @@ const User = sequelize.define('User', {
             isEmail: true
         }
     },
-    // Compatibility with your actual DB dump (../../users.sql)
-    // Actual columns: password, full_name
-    // New schema columns (password_hash, first_name, last_name) are kept as aliases.
-
     password_hash: {
         type: DataTypes.STRING(255),
-        allowNull: false,
-        field: 'password'
+        allowNull: false
     },
-
-    // Stored in DB as full_name
     first_name: {
         type: DataTypes.STRING(100),
-        allowNull: false,
-        field: 'full_name'
+        allowNull: false
     },
-
     last_name: {
         type: DataTypes.STRING(100),
-        allowNull: false,
-        // DB dump does not have last_name; reuse full_name to avoid SQL errors
-        field: 'full_name'
+        allowNull: false
     },
-    // phone column does not exist in your current DB; keep model compatible by omitting it.
-    // phone: { ... }
-
-    // NOTE: Even if the model omits `phone`, some legacy code paths may still request it.
-    // If you hit `Unknown column 'User.phone'`, search for `phone` usage in:
-    // - backend/src/controllers/auth.controller.js
-    // - backend/src/controllers/bookings.controller.js
-    // and align them with your actual `users` table columns.
+    phone: {
+        type: DataTypes.STRING(20)
+    },
 
 
     role: {
@@ -361,10 +345,6 @@ const Booking = sequelize.define('Booking', {
     },
     completed_file_url: {
         type: DataTypes.STRING(500),
-        allowNull: true
-    },
-    transaction_ref: {
-        type: DataTypes.STRING(255),
         allowNull: true
     },
 }, {
