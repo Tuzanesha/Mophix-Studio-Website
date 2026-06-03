@@ -44,6 +44,15 @@ app.use(requestLogger);
 // Static files for uploads
 app.use('/uploads', express.static('uploads'));
 
+// Serve frontend static gallery assets (frontend/public/assets) at /assets
+const path = require('path');
+app.use(
+  '/assets',
+  express.static(path.join(__dirname, '..', 'frontend', 'public', 'assets'))
+);
+
+
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Mophix Studio API is running' });

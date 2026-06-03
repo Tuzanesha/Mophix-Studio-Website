@@ -363,6 +363,10 @@ const Booking = sequelize.define('Booking', {
         type: DataTypes.STRING(500),
         allowNull: true
     },
+    transaction_ref: {
+        type: DataTypes.STRING(255),
+        allowNull: true
+    },
 }, {
     tableName: 'bookings',
     timestamps: true

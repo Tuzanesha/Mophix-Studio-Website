@@ -28,7 +28,10 @@ router.post('/:id/completed-file', verifyToken, (req, res, next) => {
     return next();
 }, bookingsController.uploadCompletedFile);
 
-// Client marks booking payment as paid (instant success - no real gateway)
+// Client marks booking payment as paid (initiates Paypack cashin)
 router.patch('/:id/pay', verifyToken, authorize('client'), bookingsController.payBooking);
+
+// Paypack Webhook (Open to public, Paypack will call this)
+router.post('/paypack-webhook', bookingsController.paypackWebhook);
 
 module.exports = router;

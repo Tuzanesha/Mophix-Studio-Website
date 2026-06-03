@@ -3,6 +3,16 @@
 const { Booking, User, Service, Testimonial } = require('../models');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
+const crypto = require('crypto');
+
+const PaypackJs = require('paypack-js').default;
+let paypack = null;
+if (process.env.PAYPACK_CLIENT_ID && process.env.PAYPACK_CLIENT_SECRET) {
+    paypack = PaypackJs.config({
+        client_id: process.env.PAYPACK_CLIENT_ID,
+        client_secret: process.env.PAYPACK_CLIENT_SECRET
+    });
+}
 
 // Get all bookings (with filters)
 const getAllBookings = async (req, res, next) => {
@@ -348,7 +358,7 @@ const cancelBooking = async (req, res, next) => {
     }
 };
 
-// Client pay (instant success)
+// Client pay (initiates Paypack Cashin)
 const payBooking = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -364,18 +374,63 @@ const payBooking = async (req, res, next) => {
             return next(new AppError('Forbidden', 403));
         }
 
+        if (!paypack) {
+            return next(new AppError('Paypack is not configured. Please add keys to .env', 500));
+        }
+
+        // Initiate cashin
+        const cashinRes = await paypack.cashin({
+            number: mobile_number,
+            amount: Number(booking.total_price),
+            environment: "production"
+        });
+
+        // cashinRes usually contains { ref: "..." }
+        const txRef = cashinRes?.data?.ref || cashinRes?.ref;
+
         await booking.update({
-            payment_status: 'paid',
-            status: booking.status === 'completed' ? 'completed' : booking.status
+            transaction_ref: txRef,
+            payment_status: 'pending' // Update to pending while waiting for USSD
         });
 
         return res.json({
             success: true,
-            message: 'Payment successful',
+            message: 'Payment request sent to your phone. Please enter PIN to confirm.',
             data: booking
         });
     } catch (e) {
-        next(e);
+        next(new AppError(e.message || 'Payment initiation failed', 500));
+    }
+};
+
+// Webhook for Paypack to notify us when transaction succeeds/fails
+const paypackWebhook = async (req, res, next) => {
+    try {
+        // Paypack sends transaction data in req.body
+        const payload = req.body;
+        console.log('Paypack Webhook received:', payload);
+
+        // Optional: verify webhook signature if Paypack provides it via headers
+        
+        const txRef = payload.data?.ref || payload.ref;
+        const status = payload.data?.status || payload.status; // e.g., 'successful', 'failed'
+
+        if (txRef) {
+            const booking = await Booking.findOne({ where: { transaction_ref: txRef } });
+            if (booking) {
+                if (status === 'successful' || status === 'success') {
+                    await booking.update({ payment_status: 'paid' });
+                } else if (status === 'failed') {
+                    await booking.update({ payment_status: 'unpaid' });
+                }
+            }
+        }
+
+        // Always return 200 OK to acknowledge webhook receipt
+        res.status(200).send('OK');
+    } catch (error) {
+        console.error('Paypack Webhook Error:', error);
+        res.status(500).send('Webhook Error');
     }
 };
 
@@ -389,5 +444,6 @@ module.exports = {
     deleteBooking,
     getBookingsCalendar,
     uploadCompletedFile,
-    payBooking
+    payBooking,
+    paypackWebhook
 };

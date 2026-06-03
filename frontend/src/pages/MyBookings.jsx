@@ -234,22 +234,19 @@ const MyBookings = () => {
                                 <button
                                     onClick={async (e) => {
                                     e.stopPropagation();
-                                    const mobile_number = window.prompt('Enter your Mobile Number (MTN/Airtel):');
+                                    const mobile_number = window.prompt('Enter your MTN/Airtel Number (e.g. 078... or 073...):');
                                     if (!mobile_number) return;
-                                    
-                                    const pin = window.prompt('Enter your Secret PIN to authorize payment:');
-                                    if (!pin) return;
 
                                     try {
                                       const res = await bookingsService.pay(booking.booking_id || booking.id, { mobile_number });
                                       setBookings(prev =>
                                         prev.map(b => (b.booking_id === (booking.booking_id || booking.id) || b.id === (booking.booking_id || booking.id))
-                                          ? { ...b, payment_status: 'paid', ...res?.data }
+                                          ? { ...b, payment_status: 'pending', ...res?.data }
                                           : b)
                                       );
-                                      toast.success('Payment successful ✅');
+                                      toast.success(res?.message || 'Payment initiated! Please check your phone for the USSD prompt to enter your PIN.', { duration: 6000 });
                                     } catch (err) {
-                                      toast.error(err?.message || 'Payment failed');
+                                      toast.error(err?.message || 'Payment initiation failed');
                                     }
                                   }}
                                   className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-black text-xs font-black rounded-xl hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/30 uppercase tracking-wider"
