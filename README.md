@@ -40,32 +40,38 @@ A **production-ready** photography studio website with full-stack implementation
 
 ### Prerequisites
 - Node.js 16+ and npm
-- MySQL 8.0+ or PostgreSQL 12+
+- Docker Desktop (for the database)
 - Git
 
-### Installation (5 minutes)
+### Mac / Linux
 
 ```bash
-# 1. Database Setup
-mysql -u root -p
-CREATE DATABASE mophix_studio;
-mysql -u root -p mophix_studio < database/schema.sql
-
-# 2. Backend Setup
-cd backend
-cp .env.example .env
-# Edit .env with your database credentials
-npm install
-npm run dev
-# Server runs on http://localhost:5000
-
-# 3. Frontend Setup (new terminal)
-cd frontend
-cp .env.example .env
-npm install
-npm start
-# App runs on http://localhost:3000
+make dev        # starts DB + backend + frontend
+# or step by step:
+make install    # install all npm dependencies
+make db         # start MySQL via Docker (waits until healthy)
+make backend    # start backend API  →  http://localhost:5000
+make frontend   # start React frontend  →  http://localhost:3000
 ```
+
+### Windows (PowerShell)
+
+One-time: allow local scripts to run:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+Then:
+```powershell
+.\mophix.ps1 dev        # starts DB + backend + frontend (new windows)
+# or step by step:
+.\mophix.ps1 install    # install all npm dependencies
+.\mophix.ps1 db         # start MySQL via Docker (waits until healthy)
+.\mophix.ps1 backend    # start backend API  →  http://localhost:5000
+.\mophix.ps1 frontend   # start React frontend  →  http://localhost:3000
+```
+
+See [DEV_RUN_DIRECT.md](DEV_RUN_DIRECT.md) for detailed per-platform instructions.
 
 ## 📁 Project Structure
 
